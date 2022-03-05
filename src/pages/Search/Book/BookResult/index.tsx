@@ -1,5 +1,6 @@
 import { BookOutlined, FilterOutlined } from '@ant-design/icons';
 import '../../searchresult';
+import {get_rough_period} from '../../utils';
 import {
   Card,
   Cascader,
@@ -34,7 +35,7 @@ function CategorySelect(obj) {
 }
 
 function DynastySelect(obj) {
-  const dynastyData = obj.children.getFilter(global.periods);
+  const dynastyData = obj.children.getFilter(global.periods, false);
 
   return (
 	<>
@@ -131,7 +132,7 @@ class BookResult extends React.Component {
 		this.flushBookResult = this.flushBookResult.bind(this);
 	}
     
-	getFilter(arr) {
+	getFilter(arr, extend=true) {
 		var ret = [];
 		for (var i=0;i<arr.length;i++) {
 			var tmp = arr[i];
@@ -140,13 +141,15 @@ class BookResult extends React.Component {
 				label: tmp.name[global.langid],
 				value: tmp.name[global.langid],
 			};
-			if ('children' in tmp) {
-				entity.children = [];
-				for (var j=0;j<tmp.children.length;j++) {
-						entity.children.push({
-							label: tmp.children[j].name[global.langid],
-							value: '@'+tmp.children[j].name[global.langid],
-						});
+			if (extend) {
+				if ('children' in tmp) {
+					entity.children = [];
+					for (var j=0;j<tmp.children.length;j++) {
+							entity.children.push({
+								label: tmp.children[j].name[global.langid],
+								value: '@'+tmp.children[j].name[global.langid],
+							});
+					}
 				}
 			}
 			ret.push(entity);
@@ -203,15 +206,25 @@ class BookResult extends React.Component {
 		var bn = val['book_name'][global.langid];
 		var cat = val['category'][global.langid];
 		var dyn = val['start_time'][global.langid];
-		if (checkcat && !(cat in validcat)) continue
-		if (checkdyn && !(dyn in validdyn)) continue
+		if (checkcat && !(cat in validcat)) continue;
+		// TODO 朝代合法性判断要修改
+		if (checkdyn && !(dyn in validdyn)) continue;
+		var period_start = get_rough_period(val['start_time'][global.langid]);
+		var period_end = get_rough_period(val['end_time'][global.langid]);
+		var period_str;
+		if (period_start==period_end) {
+			period_str = period_start;
+		}
+		else {
+			period_str = period_start + '~' + period_end;
+		}
 		if (bn in books) continue;
 		books[bn] = 0;
 		cardList.push(
 		  <MyCard
 			title={val['book_name'][global.langid]}
 			author={val['author']['name'][global.langid]}
-			dynasty={val['start_time'][global.langid]}
+			dynasty={period_str}
 			category={val['category'][global.langid]}
 		  ></MyCard>,
 		);

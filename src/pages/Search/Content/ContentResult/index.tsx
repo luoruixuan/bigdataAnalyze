@@ -2,6 +2,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { Input, Table, Tooltip } from 'antd';
 import '../../searchresult';
 import React from 'react';
+import {get_rough_period} from '../../utils';
 
 // 重写方法，中心词左右的左右字符数一致，保证中心词居中
 function warpTag(content: string, highlight: any, tagName: string) {
@@ -68,12 +69,16 @@ class ContentResult extends React.Component {
 			searchText:'',
 		};
 	}
-    getFilter(dataidx, arr) {
+    getFilter(dataidx, arr, extend=true) {
 		var data = this.state.data;
 		var mp = {}
 		for (var i=0;i<data.length;i++) {
 			var name = data[i][dataidx];
-			if (!(name in mp)) mp[name] = 0;
+			// TODO 跨度较大时有问题，先这么用
+			if (name.search('~')>=0) {
+				for (var n of name.split('~')) if (!(n in mp)) mp[n] = 0;
+			}
+			else if (!(name in mp)) mp[name] = 0;
 		}
 		var ret = [];
 		for (var i=0;i<arr.length;i++) {
@@ -84,15 +89,17 @@ class ContentResult extends React.Component {
 				value: tmp.name[global.langid],
 			};
 			if (entity.value in mp) have=true;
-			if ('children' in tmp) {
-				entity.children = [];
-				for (var j=0;j<tmp.children.length;j++) {
-					if (tmp.children[j].name[global.langid] in mp) {
-						have=true;
-						entity.children.push({
-							text: tmp.children[j].name[global.langid],
-							value: '@'+tmp.children[j].name[global.langid],
-						});
+			if (extend) {
+				if ('children' in tmp) {
+					entity.children = [];
+					for (var j=0;j<tmp.children.length;j++) {
+						if (tmp.children[j].name[global.langid] in mp) {
+							have=true;
+							entity.children.push({
+								text: tmp.children[j].name[global.langid],
+								value: '@'+tmp.children[j].name[global.langid],
+							});
+						}
 					}
 				}
 			}
@@ -104,11 +111,16 @@ class ContentResult extends React.Component {
 		var data = [];
 		for (var i=0;i<global.SearchResult.content.length;i++) {
 			var s = global.SearchResult.content[i];
+			var dyn_start = get_rough_period(s['start_time'][global.langid]);
+			var dyn_end = get_rough_period(s['end_time'][global.langid]);
+			var dyn_str;
+			if (dyn_start==dyn_end) dyn_str = dyn_start;
+			else dyn_str = dyn_start + '~' + dyn_end;
 			data.push({
 				title:s['book_name'][global.langid],
 				chapter:s['page_name'][global.langid],
 				author:s['author']['name'][global.langid],
-				dynasty:s['start_time'][global.langid],
+				dynasty:dyn_str,
 				dynasty_id:s['time'][0],
 				category:s['category'][global.langid],
 				category_id:s['cat_id'],
@@ -187,10 +199,11 @@ class ContentResult extends React.Component {
 				dataIndex: 'dynasty',
 				key: 'dynasty',
 				width: '12%',
-				filters: this.getFilter('dynasty', global.periods),
+				filters: this.getFilter('dynasty', global.periods, false),
 				filterMode: 'tree',
 				onFilter: (value: string, record: any) =>
-				  record.dynasty == value.replace('@',''),
+				  record.dynasty.split('~').indexOf(value.replace('@',''))>=0,
+				  // TODO 跨度较大时有问题，先这么用
 				sorter: (a: any, b: any) => a.dynasty_id - b.dynasty_id,
 			  },
 			  {

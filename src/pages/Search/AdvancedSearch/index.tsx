@@ -216,6 +216,17 @@ function GetLocalData() {
 		 async: false,
 		 success: function(response) {
 			 global.periods = JSON.parse(response);
+			 global.torough = {};
+			 for (var i=0;i<global.periods.length;i++) {
+				 var tmp = global.periods[i];
+				 if ('children' in tmp) {
+					 for (var j=0;j<tmp.children.length;j++) {
+						 var name = tmp.children[j].name;
+						 for (var n of name) global.torough[n] = tmp.name;
+					 }
+				 }
+				 else global.torough[tmp.name] = tmp.name;
+			 }
 		 },
 		 error: function(error) {
 			 console.log(error);

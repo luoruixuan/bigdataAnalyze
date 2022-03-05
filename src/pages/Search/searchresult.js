@@ -4,3 +4,4 @@ global.PageRange = [];
 global.timestamp = 0;
 global.langid = 0;
 global.showlength = 14;
+

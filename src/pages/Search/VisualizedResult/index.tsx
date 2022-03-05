@@ -1,8 +1,10 @@
-import { Divider, Row, Button, Select } from 'antd';
+import { Modal, Divider, Row, Button, Select } from 'antd';
 import { DualAxes, Column, Pie, WordCloud } from '@ant-design/charts';
-import { ArrowsAltOutlined } from '@ant-design/icons';
+import { ArrowsAltOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useState } from 'react';
 
 function VisualPie(props) {
+	console.log(222, props.state);
   const resdata = global.SearchResult[props.pagekey];
   var mp = {};
   for (var i=0;i<resdata.length;i++) {
@@ -13,21 +15,39 @@ function VisualPie(props) {
   }
   var arr = global.catalogues;
   var data = [];
-  for (var i=0;i<arr.length;++i) {
-	  var tmp = arr[i];
-	  var catname = tmp.name[global.langid];
-	  var count = 0;
-	  if ('children' in tmp) {
+  if (props.state=='') {
+	  for (var i=0;i<arr.length;++i) {
+		  var tmp = arr[i];
+		  var catname = tmp.name[global.langid];
+		  var count = 0;
+		  if ('children' in tmp) {
+			  for (var j=0;j<tmp.children.length;j++) {
+				  var subname = tmp.children[j].name[global.langid];
+				  if (subname in mp) count += mp[subname];
+			  }
+		  }
+		  if ((catname in mp)&&(count==0)) count = mp[catname];
+		  if (count>0) data.push({
+			  type: catname,
+			  value: count,
+			});
+	  }
+  }
+  else {
+	  for (var i=0;i<arr.length;++i) {
+		  var tmp = arr[i];
+		  var catname = tmp.name[global.langid];
+		  if (catname!=props.state) continue;
 		  for (var j=0;j<tmp.children.length;j++) {
 			  var subname = tmp.children[j].name[global.langid];
-			  if (subname in mp) count += mp[subname];
+			  if (subname in mp) {
+				data.push({
+				  type: subname,
+				  value: mp[subname],
+				});
+			  }
 		  }
 	  }
-	  if ((catname in mp)&&(count==0)) count = mp[catname];
-	  if (count>0) data.push({
-		  type: catname,
-		  value: count,
-		});
   }
   const config = {
     autoFit: true,
@@ -51,12 +71,36 @@ function VisualPie(props) {
         type: 'element-active',
       },
     ],
+	onReady: (plot) => {
+		plot.chart.on('element:click', (...args) => {
+			var clkname = args[0].data.data.type;
+			var arr=global.catalogues;
+			for (var i=0;i<arr.length;++i) {
+				var tmp = arr[i];
+				var catname = tmp.name[global.langid];
+				if (catname==clkname) {
+					if (('children' in tmp)&&(tmp.children.length>0)) props.setState(catname);
+					break;
+				}
+			}
+		})
+	},
   };
-  return (
-    <div style={{ height: '150px' }}>
-      <Pie {...config} />
-    </div>
-  );
+  if (props.state!=''){
+	  return (
+		<div style={{ height: props.height }}>
+			<Button type="text" icon={<ArrowLeftOutlined />} onClick={()=>{props.setState('');}} size="small"></Button>
+		  <Pie {...config} />
+		</div>
+	  );
+  }
+  else {
+	  return (
+		<div style={{ height: props.height }}>
+		  <Pie {...config} />
+		</div>
+	  );
+  }
 };
 
 const DemoWordCloud = () => {
@@ -188,19 +232,23 @@ const VisualDualAxes = (props) => {
 		  },
 	  };
 	  return (
-		<div style={{ height: '150px' }}>
+		<div style={{ height: props.height }}>
 		  <Column {...config} />
 		</div>
 		);
   }
   return (
-    <div style={{ height: '150px' }}>
+    <div style={{ height: props.height }}>
       <DualAxes {...config} />
     </div>
   );
 };
 
 function VisualizedResult(props) {
+	const [isPieModalVisible, setIsPieModalVisible] = useState(false);
+	const [isDualModalVisible, setIsDualModalVisible] = useState(false);
+	const [pieState, setPieState] = useState('');
+	console.log(1);
   return (
     <>
       <Divider
@@ -210,9 +258,12 @@ function VisualizedResult(props) {
         时代分布
       </Divider>
       <Row justify="end">
-        <Button type="text" icon={<ArrowsAltOutlined />} size="small"></Button>
+        <Button type="text" icon={<ArrowsAltOutlined />} onClick={()=>{setIsDualModalVisible(true);}} size="small"></Button>
       </Row>
-      <VisualDualAxes pagekey={props.pagekey}/>
+	  <Modal title='时代分布' visible={isDualModalVisible} onCancel={()=>{setIsDualModalVisible(false);}} footer={null}>
+		<VisualDualAxes pagekey={props.pagekey} height='300px'/>
+	  </Modal>
+      <VisualDualAxes pagekey={props.pagekey} height='150px'/>
       <Divider
         orientation="center"
         style={{ fontSize: '14px', marginTop: '12px', marginBottom: '6px' }}
@@ -220,9 +271,12 @@ function VisualizedResult(props) {
         类目分布
       </Divider>
       <Row justify="end">
-        <Button type="text" icon={<ArrowsAltOutlined />} size="small"></Button>
+        <Button type="text" icon={<ArrowsAltOutlined />} onClick={()=>{setIsPieModalVisible(true);}} size="small"></Button>
       </Row>
-      <VisualPie pagekey={props.pagekey}/>
+	  <Modal title='类目分布' visible={isPieModalVisible} onCancel={()=>{setIsPieModalVisible(false);}} footer={null}>
+		<VisualPie pagekey={props.pagekey} height='300px' state={pieState} setState={setPieState}/>
+	  </Modal>
+      <VisualPie pagekey={props.pagekey} height='150px' state={pieState} setState={setPieState}/>
       <Divider
         orientation="center"
         style={{ fontSize: '14px', marginTop: '12px', marginBottom: '6px' }}
