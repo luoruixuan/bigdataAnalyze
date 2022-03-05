@@ -253,7 +253,6 @@ function AdvancedSearch() {
 
   const handleChange = (e: any) => {
     setRegularSearchSwitch(e.target.checked);
-    console.log(e.target.checked);
   };
 
   const handleFormSubmit = (value: string) => {

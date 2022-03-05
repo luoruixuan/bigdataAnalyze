@@ -74,7 +74,6 @@ function QuadraticSearch(props) {
   const rangeVisible=(props.pagekey=='content');
 
   function sendRequest() {
-	  console.log(2333);
 	  var requesturl = 'http://162.105.86.52:12347/search';
 	  var data = global.SearchSetting;
 	  var q_data = {

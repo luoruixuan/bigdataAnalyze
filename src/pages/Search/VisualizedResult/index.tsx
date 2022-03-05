@@ -4,7 +4,6 @@ import { ArrowsAltOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
 function VisualPie(props) {
-	console.log(222, props.state);
   const resdata = global.SearchResult[props.pagekey];
   var mp = {};
   for (var i=0;i<resdata.length;i++) {
@@ -103,19 +102,20 @@ function VisualPie(props) {
   }
 };
 
-const DemoWordCloud = () => {
-  const data = [
-    { value: 9, name: '君子' },
-    { value: 2, name: '學而' },
-    { value: 9, name: '小人' },
-    { value: 9, name: '聖人' },
-    { value: 15, name: '仁政' },
-    { value: 10, name: '顔淵' },
-    { value: 10, name: '天' },
-    { value: 10, name: '禮' },
-    { value: 10, name: '道' },
-    { value: 10, name: '信' },
-  ];
+const VisualWordCloud = (props) => {
+	if (!('wordcloud' in global.SearchResult)) {
+		var data = [];
+	}
+	else {
+	  var arr = global.SearchResult['wordcloud'][props.pagekey];
+	  if (props.pagekey=='content') arr = arr[props.rangeState];
+	  var data = [];
+	  for (var i=0;i<arr.length;++i) {
+		  data.push({value:arr[i][1], name:arr[i][0]});
+	  }
+	}
+	if (props.size=='small') data = data.slice(0,10);
+	else data = data.slice(0, parseInt(props.numState));
   const config = {
     data,
     autoFit: true,
@@ -124,7 +124,7 @@ const DemoWordCloud = () => {
     colorField: 'name',
     wordStyle: {
       fontFamily: 'Verdana',
-      fontSize: [6, 12],
+      fontSize: [12, 24],
       rotation: 0,
     },
     // 返回值设置成一个 [0, 1) 区间内的值，
@@ -132,11 +132,46 @@ const DemoWordCloud = () => {
     random: () => 0.5,
   };
 
-  return (
-    <div style={{ height: '100px' }}>
-      <WordCloud {...config} />
-    </div>
-  );
+  if (props.size=='small') {
+	  return (
+		<div style={{ height: props.height }}>
+		  <WordCloud {...config} />
+		</div>
+	  );
+  }
+  else {
+	  return (
+		<div style={{ height: props.height }}>
+      <Row
+        align="middle"
+        justify="end"
+        style={{ fontSize: '15px', marginTop: '12px' }}
+      >
+        词汇量选取Top
+        <Select
+          defaultValue={props.numState}
+          style={{ width: 105, fontSize: '15px' }}
+          onChange={(value) => {props.setNumState(value)}}
+          size="small"
+        >
+          <Select.Option value="10" style={{ fontSize: '15px' }}>
+            10
+          </Select.Option>
+          <Select.Option value="30" style={{ fontSize: '15px' }}>
+			30
+          </Select.Option>
+          <Select.Option value="50" style={{ fontSize: '15px' }}>
+            50
+          </Select.Option>
+          <Select.Option value="100" style={{ fontSize: '15px' }}>
+			100
+          </Select.Option>
+        </Select>
+      </Row>
+		  <WordCloud {...config} />
+		</div>
+		)
+  }
 };
 
 const VisualDualAxes = (props) => {
@@ -244,11 +279,45 @@ const VisualDualAxes = (props) => {
   );
 };
 
+function WordCloudSelect(props) {
+	if (props.pagekey=='book') return (<> </>);
+	return (
+      <Row
+        align="middle"
+        justify="end"
+        style={{ fontSize: '8px', marginTop: '12px' }}
+      >
+        在结果所在
+        <Select
+          defaultValue="sentence"
+          style={{ width: 105, fontSize: '8px' }}
+          onChange={(value) => {props.setWcRangeState(value)}}
+          size="small"
+        >
+          <Select.Option value="sentence" style={{ fontSize: '8px' }}>
+            句子
+          </Select.Option>
+          <Select.Option value="para" style={{ fontSize: '8px' }}>
+            段落
+          </Select.Option>
+          <Select.Option value="chapter" style={{ fontSize: '8px' }}>
+            篇章
+          </Select.Option>
+          <Select.Option value="book" style={{ fontSize: '8px' }}>
+            书目
+          </Select.Option>
+        </Select>
+        中统计
+      </Row>);
+}
+
 function VisualizedResult(props) {
 	const [isPieModalVisible, setIsPieModalVisible] = useState(false);
 	const [isDualModalVisible, setIsDualModalVisible] = useState(false);
+	const [isWcModalVisible, setIsWcModalVisible] = useState(false);
 	const [pieState, setPieState] = useState('');
-	console.log(1);
+	const [wcRangeState, setWcRangeState] = useState('sentence');
+	const [wcNumState, setWcNumState] = useState('30');
   return (
     <>
       <Divider
@@ -283,37 +352,14 @@ function VisualizedResult(props) {
       >
         TopK词汇
       </Divider>
-      <Row
-        align="middle"
-        justify="end"
-        style={{ fontSize: '6px', marginTop: '12px' }}
-      >
-        在结果所在
-        <Select
-          defaultValue="sentence"
-          style={{ width: 65, fontSize: '4px' }}
-          onChange={() => {}}
-          size="small"
-        >
-          <Select.Option value="sentence" style={{ fontSize: '4px' }}>
-            句子
-          </Select.Option>
-          <Select.Option value="para" style={{ fontSize: '4px' }}>
-            段落
-          </Select.Option>
-          <Select.Option value="chapter" style={{ fontSize: '4px' }}>
-            篇章
-          </Select.Option>
-          <Select.Option value="book" style={{ fontSize: '4px' }}>
-            书目
-          </Select.Option>
-        </Select>
-        中统计
-      </Row>
+	  <WordCloudSelect pagekey={props.pagekey} setWcRangeState={setWcRangeState}/>
       <Row justify="end">
-        <Button type="text" icon={<ArrowsAltOutlined />} size="small"></Button>
+        <Button type="text" icon={<ArrowsAltOutlined />} onClick={()=>{setIsWcModalVisible(true);}} size="small"></Button>
       </Row>
-      <DemoWordCloud />
+	  <Modal title='TopK词汇' visible={isWcModalVisible} onCancel={()=>{setIsWcModalVisible(false);}} footer={null}>
+		<VisualWordCloud pagekey={props.pagekey} height='300px' size="large" rangeState={wcRangeState} numState={wcNumState} setNumState={setWcNumState}/>
+	  </Modal>
+      <VisualWordCloud pagekey={props.pagekey} height='100px' size="small" rangeState={wcRangeState}/>
     </>
   );
 }

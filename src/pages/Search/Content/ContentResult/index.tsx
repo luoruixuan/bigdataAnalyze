@@ -9,8 +9,6 @@ function warpTag(content: string, highlight: any, tagName: string) {
   if (content === '') {
     return content;
   }
-  console.log(content);
-  console.log(highlight);
   var real_highlight = highlight.concat();
   for (var i=0;i<content.length;i++) {
 	  if (content.codePointAt(i)>0xffff) {
