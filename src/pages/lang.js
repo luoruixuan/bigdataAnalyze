@@ -1,0 +1,2 @@
+global.langid = 0;
+
