@@ -80,7 +80,7 @@ function MyCard(props: {
   category: string;
 }) {
   const handleOnclick = () => {
-    window.location.href = '/book/论语';
+    window.location.href = '/book/'+props.title;
   };
 
   return (

@@ -14,14 +14,19 @@ export default defineConfig({
   },
   routes: [
     {
+	  name: 'book',
       path: '/book',
-      routes: [
+	  routes: [
+		{
+		  path: '/book',
+		  component: './Book/Overview',
+		},
         {
           path: '/book/:bookName',
           component: './Book/$dynamic',
+		  hideInMenu: true,
         },
       ],
-      hideInMenu: true,
     },
     {
       path: '/sentence',

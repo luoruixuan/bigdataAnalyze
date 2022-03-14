@@ -1,5 +1,6 @@
 // en-US.ts文件
 export default {
+  'menu.book': 'Browse',
   'menu.search': 'Search',
   'menu.reuse': 'Reuse',
   'menu.frequency': 'Frequency',

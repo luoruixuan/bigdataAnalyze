@@ -1,4 +1,5 @@
 export default {
+  'menu.book': '典籍浏览',
   'menu.search': '典籍查询',
   'menu.reuse': '复用分析',
   'menu.frequency': '词频分析',

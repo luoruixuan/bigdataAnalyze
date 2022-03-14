@@ -1,6 +1,9 @@
 import { PageContainer } from '@ant-design/pro-layout';
 import { Alert, Card, Tabs, Typography, Table, Button } from 'antd';
 const { Title } = Typography;
+import '../../lang';
+import React from 'react';
+import $ from 'jquery';
 
 function warpTag(content: string, keyword: string, tagName: string) {
   if (content === '') {
@@ -21,6 +24,7 @@ function warpTag(content: string, keyword: string, tagName: string) {
 }
 
 function NestedTable(props: any) {
+	var reuse = props.reuse;
   console.log(props.keyword);
 
   const columns = [
@@ -37,7 +41,7 @@ function NestedTable(props: any) {
       render: (text: any, records: any) => (
         <div
           dangerouslySetInnerHTML={{
-            __html: warpTag(text, props.keyword, 'span'),
+            __html: text,
           }}
         ></div>
       ),
@@ -48,85 +52,115 @@ function NestedTable(props: any) {
       key: 'book',
       width: '20%',
       render: (_: any, records: any) => (
-        <a href={`/book/${records.book}`}>
+        <a href={`/book/${records.book}?page=${records.chapterid}`}>
           {records.book}-{records.chapter}
         </a>
       ),
     },
   ];
 
-  const data = [
-    {
-      key: '11',
-      text: '「學而時習之」，「鷹乃學習」之義。「子路有聞，未之能行，唯恐有聞。」人不知而不慍。',
-      book: '二程外書',
-      chapter: '章节XX',
-    },
-    {
-      key: '12',
-      text: '「學而時習之」，「鷹乃學習」之義。「子路有聞，未之能行，唯恐有聞。」人不知而不慍。',
-      book: '二程外書',
-      chapter: '章节XX',
-    },
-    {
-      key: '13',
-      text: '「學而時習之」，「鷹乃學習」之義。「子路有聞，未之能行，唯恐有聞。」人不知而不慍。',
-      book: '二程外書',
-      chapter: '章节XX',
-    },
-  ];
+  var data = [];
+  for (var i=0;i<reuse.length;i++) {
+	  var tgt = reuse[i];
+	  var tgtsub = tgt.target_id[4];
+	  var tmp = [];
+	  for (var j=0;j<tgt.subsents.length;j++) {
+		  if (j==tgtsub) tmp.push(`<span style="color:red">${tgt.subsents[j]}</span>`);
+		  else tmp.push(tgt.subsents[j]);
+	  }
+	  data.push({
+		  text: tmp.join(''),
+		  book:tgt.book_name[global.langid],
+		  chapter:tgt.page_name[global.langid],
+		  chapterid:tgt.target_id[1],
+	  });
+  }
 
   return <Table columns={columns} dataSource={data} pagination={false} />;
 }
 
-function sentenceBrowse(props: any) {
-  const routes: never[] = [];
-  console.log(`${props.match.params.SentenceId}`);
+class sentenceBrowse extends React.Component {
+	constructor(props) {
+		super(props);
+		var requesturl = "http://162.105.86.52:12347/browse/sentence";
+		var data = {
+			'sentid': props.match.params.sentenceID,
+		};
+		var reuse;
+		console.log(data);
+		$.ajax({
+			type: 'GET',
+			url: requesturl, 
+			data: data, 
+			async: false,
+			success: function(response) {
+				reuse = JSON.parse(response);
+				console.log(response);
+			},
+			error: function(error) {
+				console.log(error);
+			},
+		});
+		this.reuse = reuse;
+		this.state = {
+			props:props,
+		};
+	}
 
-  return (
-    <PageContainer title={false} breadcrumb={{ routes }}>
-      <Card>
-        <Title level={3}>
-          子曰：「
-          <span
-            style={{ backgroundColor: '#F5A9A9' }}
-            onClick={() => {
-              document.getElementById('學而時習之')?.scrollIntoView();
-            }}
-          >
-            學而時習之
-          </span>
-          ，不亦說乎？有朋自遠方來，不亦樂乎？
-          <span
-            style={{ backgroundColor: '#F5A9A9' }}
-            onClick={() => {
-              document.getElementById('人不知而不慍')?.scrollIntoView();
-            }}
-          >
-            人不知而不慍
-          </span>
-          ，不亦君子乎？
-        </Title>
-        <div style={{ paddingTop: 20, paddingBottom: 20 }}>
-          <Alert
-            message="该句在本系统所收录的所有书目中共复用XXX次"
-            type="success"
-            showIcon
-          />
-        </div>
+	render() {
+	  const routes: never[] = [];
+	  var props = this.state.props;
+	  var titlelst = [];
+	  var totalreuse = 0;
+	  var detaillst = [];
 
-        <Title level={4} id="學而時習之">
-          學而時習之
-        </Title>
-        <NestedTable keyword={'學而時習之'} />
-        <br></br>
-        <Title level={4} id="人不知而不慍">
-          人不知而不慍
-        </Title>
-        <NestedTable keyword={'人不知而不慍'} />
-      </Card>
-    </PageContainer>
-  );
+	  function scrollToId(txt) {
+		  return ()=>{document.getElementById(txt)?.scrollIntoView();}
+	  }
+	  for (var i=0;i<this.reuse.subsents.length;i++) {
+		  var subsent = this.reuse.subsents[i];
+		  if (subsent.reuse.length==0) {
+			  titlelst.push(subsent.text);
+		  }
+		  else {
+			  titlelst.push(
+			  <span
+				style={{ backgroundColor: '#F5A9A9' }}
+				onClick={scrollToId(subsent.text)}>
+				{subsent.text}
+			  </span>
+			  );
+			  totalreuse += subsent.reuse.length;
+			  detaillst.push(
+			  <>
+				<Title level={4} id={subsent.text}>
+				  {subsent.text}
+				</Title>
+				<NestedTable reuse={subsent.reuse} />
+				<br></br>
+			  </>
+			  );
+		  }
+	  }
+
+	  return (
+		<PageContainer title={false} breadcrumb={{ routes }}>
+		  <Card>
+			<Title level={3}>
+				{titlelst}
+			</Title>
+			<div style={{ paddingTop: 20, paddingBottom: 20 }}>
+			  <Alert
+				message={`该句在本系统所收录的所有书目中共复用${totalreuse}次`}
+				type="success"
+				showIcon
+			  />
+			</div>
+			  {detaillst}
+		  </Card>
+		</PageContainer>
+	  );
+	}
 }
 
 export default sentenceBrowse;

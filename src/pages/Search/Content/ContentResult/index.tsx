@@ -9,7 +9,7 @@ function warpTag(content: string, highlight: any, tagName: string) {
   if (content === '') {
     return content;
   }
-  var real_highlight = highlight.concat();
+  var real_highlight = highlight.map((x)=>x.concat());
   for (var i=0;i<content.length;i++) {
 	  if (content.codePointAt(i)>0xffff) {
 		  for (var j=0;j<real_highlight.length;j++) {
@@ -124,6 +124,7 @@ class ContentResult extends React.Component {
 				category_id:s['cat_id'],
 				text:s['text'],
 				highlight:s['highlight'],
+				page_id:s['idx'],
 			});
 		}
 		return data;
@@ -148,7 +149,7 @@ class ContentResult extends React.Component {
 				  const info = `${text}-${record.chapter}`;
 				  return (
 					<Tooltip placement="topLeft" title={info}>
-					  <a href={`/book/${text}`}>{info}</a>
+					  <a href={`/book/${text}?page=${record.page_id[1]}`}>{info}</a>
 					</Tooltip>
 				  );
 				},
