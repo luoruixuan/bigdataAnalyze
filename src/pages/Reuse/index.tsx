@@ -17,204 +17,26 @@ import BookReuse from './Components/Book';
 import PhraseReuse from './Components/Phrase';
 import ChapterReuse from './Components/Chapter';
 import SentenceReuse from './Components/Sentence';
+import React from 'react';
+import $ from 'jquery';
+import '../lang';
 
 const { Step } = Steps;
 
-function RangeSelect() {
+function RangeSelect(props) {
   const [searchType, setSearchType] = useState<String>('dynasty');
 
-  const categoryData = [
-    {
-      title: '经部',
-      value: '经部',
-      key: '经部',
-      children: [
-        {
-          title: '論語',
-          value: '論語',
-          key: '論語',
-          children: [
-            {
-              title: '論語-學而第一',
-              value: '論語-學而第一',
-              key: '論語-學而第一',
-            },
-            {
-              title: '論語-為政第二',
-              value: '論語-為政第二',
-              key: '論語-為政第二',
-            },
-          ],
-        },
-        {
-          title: '孝經',
-          value: '孝經',
-          key: '孝經',
-          children: [
-            {
-              title: '孝經-開宗明義章',
-              value: '孝經-開宗明義章',
-              key: '孝經-開宗明義章',
-            },
-            {
-              title: '孝經-天子章',
-              value: '孝經-天子章',
-              key: '孝經-天子章',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: '史部',
-      value: '史部',
-      key: '史部',
-      children: [
-        {
-          title: '漢書',
-          value: '漢書',
-          key: '漢書',
-        },
-        {
-          title: '三國志',
-          value: '三國志',
-          key: '三國志',
-        },
-      ],
-    },
-  ];
-
-  const genreData = [
-    {
-      title: '诗歌',
-      value: '诗歌',
-      key: '诗歌',
-      children: [
-        {
-          title: '楚辭',
-          value: '楚辭',
-          key: '楚辭',
-        },
-      ],
-    },
-    {
-      title: '小说',
-      value: '小说',
-      key: '小说',
-      children: [
-        {
-          title: '紅樓夢',
-          value: '紅樓夢',
-          key: '紅樓夢',
-        },
-        {
-          title: '三國演義',
-          value: '三國演義',
-          key: '三國演義',
-        },
-      ],
-    },
-  ];
-
-  const dynastyData = [
-    {
-      title: '先秦两汉',
-      value: '先秦两汉',
-      key: '先秦两汉',
-      children: [
-        {
-          title: '春秋繁露',
-          value: '春秋繁露',
-          key: '春秋繁露',
-          children: [
-            {
-              title: '春秋繁露-卷一',
-              value: '春秋繁露-卷一',
-              key: '春秋繁露-卷一',
-            },
-            {
-              title: '春秋繁露-卷二',
-              value: '春秋繁露-卷二',
-              key: '春秋繁露-卷二',
-            },
-          ],
-        },
-        {
-          title: '韓詩外傳',
-          value: '韓詩外傳',
-          key: '韓詩外傳',
-          children: [
-            {
-              title: '韓詩外傳-卷一',
-              value: '韓詩外傳-卷一',
-              key: '韓詩外傳-卷一',
-            },
-            {
-              title: '韓詩外傳-卷二',
-              value: '韓詩外傳-卷二',
-              key: '韓詩外傳-卷二',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: '魏晋南北朝',
-      value: '魏晋南北朝',
-      key: '魏晋南北朝',
-      children: [
-        {
-          title: '顏氏家訓',
-          value: '顏氏家訓',
-          key: '顏氏家訓',
-        },
-        {
-          title: '劉子新論',
-          value: '劉子新論',
-          key: '劉子新論',
-        },
-      ],
-    },
-    {
-      title: '宋明',
-      value: '宋明',
-      key: '宋明',
-      children: [
-        {
-          title: '榕壇問業',
-          value: '榕壇問業',
-          key: '榕壇問業',
-        },
-        {
-          title: '二程外書',
-          value: '二程外書',
-          key: '二程外書',
-        },
-        {
-          title: '困學紀聞',
-          value: '困學紀聞',
-          key: '困學紀聞',
-        },
-      ],
-    },
-  ];
-
-  const typeList = {
-    dynasty: dynastyData,
-    category: categoryData,
-    genre: genreData,
-  };
+  const typeList = props.local.range;
 
   const { SHOW_PARENT } = TreeSelect;
   const { Option } = Select;
 
   function rangeSelectChange(value: string) {
-    console.log(value);
     setSearchType(value.slice());
   }
 
   function treeSelectChange(value: any) {
-    console.log(value);
+    props.setMethod(value);
   }
 
   return (
@@ -225,7 +47,6 @@ function RangeSelect() {
         onChange={rangeSelectChange}
       >
         <Option value="dynasty">按时代</Option>
-        <Option value="genre">按体裁</Option>
         <Option value="category">按类别</Option>
       </Select>
       <TreeSelect
@@ -242,7 +63,7 @@ function RangeSelect() {
   );
 }
 
-function RangeSetting() {
+function RangeSetting(props) {
   return (
     <Card
       style={{ marginTop: 24 }}
@@ -251,18 +72,28 @@ function RangeSetting() {
     >
       <Row style={{ marginBottom: 15 }}>选择复用分析书目集合：</Row>
       <Row>
-        <RangeSelect></RangeSelect>
+        <RangeSelect
+          local={props.local}
+          setMethod={(x) => {
+            props.local.Aset = x;
+          }}
+        ></RangeSelect>
       </Row>
       <Divider />
       <Row style={{ marginBottom: 15 }}>选择复用检索书目集合：</Row>
       <Row>
-        <RangeSelect></RangeSelect>
+        <RangeSelect
+          local={props.local}
+          setMethod={(x) => {
+            props.local.Bset = x;
+          }}
+        ></RangeSelect>
       </Row>
     </Card>
   );
 }
 
-function ReuseResult() {
+function ReuseResult(props) {
   const tabList = [
     {
       key: 'book',
@@ -285,9 +116,9 @@ function ReuseResult() {
   const [activeTabKey, setActiveTabKey] = useState('book');
 
   const contentList = {
-    book: <BookReuse></BookReuse>,
-    chapter: <ChapterReuse></ChapterReuse>,
-    sentence: <SentenceReuse></SentenceReuse>,
+    book: <BookReuse local={props.local}></BookReuse>,
+    chapter: <ChapterReuse local={props.local}></ChapterReuse>,
+    sentence: <SentenceReuse local={props.local}></SentenceReuse>,
     // 'phrase': <PhraseReuse></PhraseReuse>
   };
 
@@ -311,41 +142,117 @@ function ReuseResult() {
   );
 }
 
-function ReusePage() {
-  const [current, setCurrent] = useState(0);
+function todata(x) {
+  var ret = {};
+  ret.title = x.name[global.langid];
+  ret.value = ret.key = x.value;
+  ret.children = [];
+  for (var i = 0; i < x.children.length; i++) {
+    //if (x.children[i].value.startsWith('@@@')) continue;
+    ret.children.push(todata(x.children[i]));
+  }
+  return ret;
+}
 
-  return (
-    <PageContainer>
-      <Card
-        style={{ marginTop: 24 }}
-        bordered={false}
-        bodyStyle={{ padding: '32px 32px 32px 32px' }}
-      >
-        <Steps current={current}>
-          <Step title="分析范围设置" />
-          <Step title="复用分析结果" />
-        </Steps>
-      </Card>
-      <div className="steps-content">
-        {current === 0 && <RangeSetting></RangeSetting>}
-        {current === 1 && <ReuseResult></ReuseResult>}
-      </div>
-      <Card>
-        <div className="steps-action" style={{ float: 'right' }}>
-          {current === 0 && (
-            <Button type="primary" onClick={() => setCurrent(current + 1)}>
-              下一步
-            </Button>
+class ReusePage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      current: 0,
+    };
+    const requesturl = 'http://162.105.86.52:12347/reuse/getrange';
+    var resp;
+    $.ajax({
+      type: 'GET',
+      url: requesturl,
+      async: false,
+      success: function (response) {
+        resp = JSON.parse(response);
+      },
+      error: function (error) {
+        console.log(error);
+      },
+    });
+    console.log(resp);
+    var rangemp = {};
+    for (var i in resp) {
+      var lst = [];
+      for (var j = 0; j < resp[i].length; j++) lst.push(todata(resp[i][j]));
+      rangemp[i] = lst;
+    }
+    this.local = {
+      range: rangemp,
+      Aset: [],
+      Bset: [],
+    };
+  }
+
+  getres() {
+    const requesturl = 'http://162.105.86.52:12347/reuse/getreuse';
+    var data = { Aset: this.local.Aset, Bset: this.local.Bset };
+    var resp;
+    $.ajax({
+      type: 'GET',
+      url: requesturl,
+      data: data,
+      async: false,
+      success: function (response) {
+        resp = JSON.parse(response);
+      },
+      error: function (error) {
+        console.log(error);
+      },
+    });
+    this.local.result = resp;
+  }
+
+  render() {
+    return (
+      <PageContainer>
+        <Card
+          style={{ marginTop: 24 }}
+          bordered={false}
+          bodyStyle={{ padding: '32px 32px 32px 32px' }}
+        >
+          <Steps current={this.state.current}>
+            <Step title="分析范围设置" />
+            <Step title="复用分析结果" />
+          </Steps>
+        </Card>
+        <div className="steps-content">
+          {this.state.current === 0 && (
+            <RangeSetting local={this.local}></RangeSetting>
           )}
-          {current === 1 && (
-            <Button type="primary" onClick={() => setCurrent(0)}>
-              重新选择
-            </Button>
+          {this.state.current === 1 && (
+            <ReuseResult local={this.local}></ReuseResult>
           )}
         </div>
-      </Card>
-    </PageContainer>
-  );
+        <Card>
+          <div className="steps-action" style={{ float: 'right' }}>
+            {this.state.current === 0 && (
+              <Button
+                type="primary"
+                onClick={() => {
+                  this.getres();
+                  this.setState({ current: 1 });
+                }}
+              >
+                下一步
+              </Button>
+            )}
+            {this.state.current === 1 && (
+              <Button
+                type="primary"
+                onClick={() => this.setState({ current: 0 })}
+              >
+                重新选择
+              </Button>
+            )}
+          </div>
+        </Card>
+      </PageContainer>
+    );
+  }
 }
 
 export default ReusePage;
