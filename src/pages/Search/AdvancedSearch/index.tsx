@@ -186,6 +186,7 @@ function GetLocalData() {
       url: requesturl,
       async: false,
       success: function (response) {
+        console.log(response);
         global.catalogues = JSON.parse(response);
       },
       error: function (error) {

@@ -1,164 +1,218 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-layout';
-import { Card, Form, Image, Select, Tabs, Tooltip, TreeSelect } from 'antd';
+import {
+  Row,
+  Col,
+  Button,
+  Card,
+  Form,
+  Image,
+  Select,
+  Tabs,
+  Tooltip,
+  TreeSelect,
+  Table,
+} from 'antd';
+import { Sparklines, SparklinesLine } from 'react-sparklines';
 import { useState } from 'react';
+import React from 'react';
+import RangeSelectBar from '../RangeSelectBar';
+import $ from 'jquery';
+import LineFig from '../LineFig';
+import BarFig from '../BarFig';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
 const { SHOW_PARENT } = TreeSelect;
 
-const children: any[] = [];
-for (let i = 1; i < 40; i++) {
-  children.push(
-    <Option key={i} value={i}>
-      {'词语' + i}
-    </Option>,
-  );
-}
+class WordPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.form = {};
+    this.columns = [
+      {
+        title: '词语',
+        dataIndex: 'word',
+        key: 'word',
+        width: '25%',
+      },
+      {
+        title: '频次',
+        dataIndex: 'frequency',
+        key: 'frequency',
+        width: '25%',
+      },
+      {
+        title: '历时变化',
+        dataIndex: 'sample',
+        key: 'sample',
+        width: '25%',
+        render: (_: any, records: any) => (
+          <>
+            <Sparklines data={records.spark}>
+              <SparklinesLine color="blue" />
+            </Sparklines>
+          </>
+        ),
+      },
+    ];
+    this.state = {
+      wordSelect: true,
+      selected: [],
+      result: { count: [], matrix: [], periods: [], words: [] },
+      tabledata: [],
+    };
+  }
 
-const treeData = [
-  {
-    title: '先秦两汉',
-    value: '0-0',
-    key: '0-0',
-    children: [
-      {
-        title: '春秋繁露',
-        value: '春秋繁露',
-        key: '春秋繁露',
-      },
-      {
-        title: '韓詩外傳',
-        value: '韓詩外傳',
-        key: '韓詩外傳',
-      },
-    ],
-  },
-  {
-    title: '魏晋南北朝',
-    value: '0-1',
-    key: '0-1',
-    children: [
-      {
-        title: '顏氏家訓',
-        value: '顏氏家訓',
-        key: '顏氏家訓',
-      },
-      {
-        title: '劉子新論',
-        value: '劉子新論',
-        key: '劉子新論',
-      },
-    ],
-  },
-  {
-    title: '宋明',
-    value: '0-3',
-    key: '0-3',
-    children: [
-      {
-        title: '榕壇問業',
-        value: '榕壇問業',
-        key: '榕壇問業',
-      },
-      {
-        title: '二程外書',
-        value: '二程外書',
-        key: '二程外書',
-      },
-      {
-        title: '困學紀聞',
-        value: '困學紀聞',
-        key: '困學紀聞',
-      },
-    ],
-  },
-];
-
-function WordPage() {
-  const [wordSelect, setWordSelect] = useState<boolean>(true);
-
-  function bookSelectChange(value: any) {
-    console.log('onChange ', value);
+  get_topk(value) {
+    console.log(value);
+    var stateupdate = { selected: [], tabledata: [] };
     if (value === [] || value.length === 0) {
-      setWordSelect(true);
+      stateupdate.wordSelect = true;
     } else {
-      setWordSelect(false);
+      stateupdate.wordSelect = false;
     }
+    if (value.length > 0) {
+      var requesturl = 'http://162.105.86.52:12347/frequency/word';
+      var data = { range: value };
+      var resp;
+      $.ajax({
+        type: 'GET',
+        url: requesturl,
+        data: data,
+        async: false,
+        success: function (response) {
+          resp = JSON.parse(response);
+        },
+        error: function (error) {
+          console.log(error);
+        },
+      });
+      stateupdate.result = resp;
+      console.log(resp);
+    } else {
+      stateupdate.result = { count: [], matrix: [], periods: [], words: [] };
+    }
+    this.setState(stateupdate);
   }
 
-  function wordSelectChange(value: any) {
-    console.log(`selected ${value}`);
+  wordSelectChange(value: any) {
+    console.log(value);
+    var tabledata = [];
+    for (var i = 0; i < value.length; i++) {
+      var idx = value[i];
+      var tmp = {
+        key: tabledata.length + 1,
+        word: this.state.result.words[idx],
+        frequency: this.state.result.count[idx],
+        spark: this.state.result.matrix[idx],
+      };
+      tabledata.push(tmp);
+    }
+    this.setState({ selected: value, tabledata: tabledata });
   }
 
-  return (
-    <PageContainer>
-      <Card
-        title="分析范围选择"
-        style={{ marginTop: 24 }}
-        bordered={false}
-        bodyStyle={{ padding: '32px 32px 32px 32px' }}
-      >
-        <Form>
-          <Form.Item label="统计范围">
-            <TreeSelect
-              treeData={treeData}
-              treeCheckable={true}
-              showCheckedStrategy={SHOW_PARENT}
-              placeholder={'请选择要检索的书目集合'}
-              onChange={bookSelectChange}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-          <Form.Item label="词汇范围">
-            <Select
-              mode="multiple"
-              allowClear
-              style={{ width: '100%' }}
-              placeholder="请选择要分析的词语范围"
-              // defaultValue={[10, 11]}
-              onChange={wordSelectChange}
-              disabled={wordSelect}
-            >
-              {children}
-            </Select>
-          </Form.Item>
-        </Form>
-      </Card>
-      <Card
-        style={{ marginTop: 24 }}
-        bordered={false}
-        bodyStyle={{ padding: '32px 32px 32px 32px' }}
-      >
-        <Tabs type="card">
-          <TabPane tab="统计列表" key="1">
-            <Tooltip title="【note】呈现词汇的使用频次和历时变化趋势">
-              <InfoCircleOutlined />
-            </Tooltip>
-            <Image
-              width={'100%'}
-              preview={false}
-              src={require('/src/assets/trendListDemo.png')}
-            />
-          </TabPane>
-          <TabPane tab="折线图" key="2">
-            <Image
-              width={'100%'}
-              preview={false}
-              src={require('/src/assets/lineChartDemo.jpg')}
-            />
-          </TabPane>
-          <TabPane tab="柱状图" key="3">
-            <Image
-              width={'100%'}
-              preview={false}
-              src={require('/src/assets/barChartDemo.jpg')}
-            />
-          </TabPane>
-        </Tabs>
-      </Card>
-    </PageContainer>
-  );
+  render() {
+    var children = [];
+    for (var i = 0; i < this.state.result.words.length; i++) {
+      children.push(
+        <Option key={i} value={i}>
+          {this.state.result.words[i]}
+        </Option>,
+      );
+    }
+
+    var selected_fig = {
+      words: [],
+      matrix: [],
+      periods: this.state.result.periods,
+    };
+    for (var i = 0; i < this.state.selected.length; i++) {
+      var idx = this.state.selected[i];
+      selected_fig.words.push(this.state.result.words[idx]);
+      selected_fig.matrix.push(this.state.result.matrix[idx]);
+    }
+    this.figresult = { fig: selected_fig };
+
+    return (
+      <PageContainer>
+        <Card
+          title="分析范围选择"
+          style={{ marginTop: 24 }}
+          bordered={false}
+          bodyStyle={{ padding: '32px 32px 32px 32px' }}
+        >
+          <Form>
+            <Form.Item label="统计范围">
+              <Row>
+                <Col span={20}>
+                  <RangeSelectBar
+                    setMethod={(x) => {
+                      this.form.range = x;
+                    }}
+                    fixdyn={true}
+                  />
+                </Col>
+                <Col span={4}>
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      this.get_topk(this.form.range);
+                    }}
+                  >
+                    下一步
+                  </Button>
+                </Col>
+              </Row>
+            </Form.Item>
+            <Form.Item label="词汇范围">
+              <Select
+                mode="multiple"
+                allowClear
+                style={{ width: '100%' }}
+                placeholder="请选择要分析的词语范围"
+                // defaultValue={[10, 11]}
+                onChange={(x) => {
+                  this.wordSelectChange(x);
+                }}
+                disabled={this.state.wordSelect}
+              >
+                {children}
+              </Select>
+            </Form.Item>
+          </Form>
+        </Card>
+        <Card
+          style={{ marginTop: 24 }}
+          bordered={false}
+          bodyStyle={{ padding: '32px 32px 32px 32px' }}
+        >
+          <Tabs type="card">
+            <TabPane tab="统计列表" key="1">
+              <Tooltip title="【note】呈现词汇的使用频次和历时变化趋势">
+                <InfoCircleOutlined />
+              </Tooltip>
+              <Table columns={this.columns} dataSource={this.state.tabledata} />
+            </TabPane>
+            <TabPane tab="折线图" key="2">
+              <LineFig
+                resultfunc={() => {
+                  return this.figresult;
+                }}
+              />
+            </TabPane>
+            <TabPane tab="柱状图" key="3">
+              <BarFig
+                resultfunc={() => {
+                  return this.figresult;
+                }}
+              />
+            </TabPane>
+          </Tabs>
+        </Card>
+      </PageContainer>
+    );
+  }
 }
 
 export default WordPage;
